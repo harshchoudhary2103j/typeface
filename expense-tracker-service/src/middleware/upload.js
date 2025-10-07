@@ -11,16 +11,9 @@ if (!fs.existsSync(uploadsDir)) {
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let uploadPath = uploadsDir;
+    let uploadPath = path.join(uploadsDir, 'temp'); // Always use temp folder initially
     
-    // Create subdirectories based on file type - use temp for receipts initially
-    if (file.fieldname === 'receipt') {
-      uploadPath = path.join(uploadsDir, 'temp'); // Store in temp folder first
-    } else if (file.fieldname === 'statement') {
-      uploadPath = path.join(uploadsDir, 'statements');
-    }
-
-    // Ensure subdirectory exists
+    // Ensure temp directory exists
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -36,7 +29,8 @@ const storage = multer.diskStorage({
 
 // File filter function
 const fileFilter = (req, file, cb) => {
-  // TODO: Implement file type validation
+  console.log('File filter - fieldname:', file.fieldname, 'mimetype:', file.mimetype);
+  
   const allowedTypes = {
     receipt: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
     statement: ['application/pdf']
@@ -63,6 +57,8 @@ const uploadMiddleware = multer({
 
 // Error handling middleware for multer
 const handleUploadError = (error, req, res, next) => {
+  console.error('Upload error:', error);
+  
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
@@ -76,9 +72,23 @@ const handleUploadError = (error, req, res, next) => {
         message: 'Too many files. Only one file is allowed.'
       });
     }
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Unexpected field. Use "receipt" for receipt uploads or "statement" for statement uploads.'
+      });
+    }
   }
   
-  if (error.message.includes('Invalid file type')) {
+  if (error.message && error.message.includes('Unexpected field')) {
+    return res.status(400).json({
+      success: false,
+      message: 'Unexpected field. Use "receipt" for receipt uploads or "statement" for statement uploads.',
+      debug: error.message
+    });
+  }
+  
+  if (error.message && error.message.includes('Invalid file type')) {
     return res.status(400).json({
       success: false,
       message: error.message

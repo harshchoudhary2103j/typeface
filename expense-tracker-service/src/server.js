@@ -13,6 +13,7 @@ const { connectDB } = require('../config/database');
 const transactionRoutes = require('./routes/transactions');
 const analyticsRoutes = require('./routes/analytics');
 const receiptRoutes = require('./routes/receipts');
+const statementRoutes = require('./routes/statements');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -55,7 +56,8 @@ app.get('/health', (req, res) => {
     availableRoutes: {
       transactions: '/api/v1/transactions',
       analytics: '/api/v1/analytics',
-      receipts: '/api/v1/receipts'
+      receipts: '/api/v1/receipts',
+      statements: '/api/v1/statements'
     }
   });
 });
@@ -64,6 +66,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/receipts', receiptRoutes);
+app.use('/api/v1/statements', statementRoutes);
 
 // Handle upload errors
 app.use(handleUploadError);
@@ -98,6 +101,10 @@ const startServer = async () => {
       console.log('   POST /api/v1/receipts/confirm-transaction - Confirm and create transaction');
       console.log('   POST /api/v1/receipts/reject-processing - Reject processing and cleanup');
       console.log('   GET  /api/v1/receipts/history - Get receipt processing history');
+      console.log('   POST /api/v1/statements/process-ocr - Process statement OCR for review');
+      console.log('   POST /api/v1/statements/confirm-transactions - Confirm and create transactions');
+      console.log('   POST /api/v1/statements/reject-processing - Reject processing and cleanup');
+      console.log('   GET  /api/v1/statements/history - Get statement processing history');
     });
 
   } catch (error) {

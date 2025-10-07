@@ -109,6 +109,29 @@ const transactionSchema = new mongoose.Schema({
       processedAt: Date
     },
     required: false
+  },
+
+  // Statement data (for transactions created from statement OCR)
+  statementData: {
+    type: {
+      statementInfo: {
+        accountNumber: String,
+        period: String,
+        openingBalance: Number,
+        closingBalance: Number,
+        totalTransactions: Number
+      },
+      balance: Number,
+      originalFilename: String,
+      uploadedFilename: String,
+      fileSize: Number,
+      filePath: String,
+      processedAt: Date,
+      userReviewed: Boolean,
+      extractedAt: Date,
+      transactionIndex: Number
+    },
+    required: false
   }
 }, {
   timestamps: true,
