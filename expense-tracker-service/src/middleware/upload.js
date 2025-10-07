@@ -13,9 +13,9 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadPath = uploadsDir;
     
-    // Create subdirectories based on file type
+    // Create subdirectories based on file type - use temp for receipts initially
     if (file.fieldname === 'receipt') {
-      uploadPath = path.join(uploadsDir, 'receipts');
+      uploadPath = path.join(uploadsDir, 'temp'); // Store in temp folder first
     } else if (file.fieldname === 'statement') {
       uploadPath = path.join(uploadsDir, 'statements');
     }

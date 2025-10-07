@@ -21,10 +21,10 @@ const { handleUploadError } = require('./middleware/upload');
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// Rate limiting
+// Rate limiting with environment variables
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -34,7 +34,7 @@ const limiter = rateLimit({
 // Middleware setup
 app.use(helmet()); // Security headers
 app.use(compression()); // Compress responses
-app.use(morgan('combined')); // Logging
+app.use(morgan(process.env.LOG_LEVEL || 'combined')); // Logging
 app.use(limiter); // Rate limiting
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
@@ -51,10 +51,11 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
+    version: process.env.APP_VERSION || '1.0.0',
     availableRoutes: {
-      transactions: '/api/transactions',
-      analytics: '/api/analytics',
-      receipts: '/api/receipts'
+      transactions: '/api/v1/transactions',
+      analytics: '/api/v1/analytics',
+      receipts: '/api/v1/receipts'
     }
   });
 });
@@ -82,11 +83,25 @@ const startServer = async () => {
     
     // Start server
     app.listen(PORT, () => {
-        console.log(`Expense Tracker Service running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      console.log(`✅ ${process.env.APP_NAME || 'Expense Tracker Service'} running on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🗄️  Database: MongoDB Connected`);
+      console.log(`🔒 CORS Origins: ${process.env.ALLOWED_ORIGINS || 'http://localhost:3000'}`);
+      console.log(`⏱️  Rate Limit: ${process.env.RATE_LIMIT_MAX_REQUESTS || 100} requests per ${(parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000) / 60000} minutes`);
+      console.log('Available Routes:');
+      console.log('   GET  /api/v1/transactions - Get all transactions');
+      console.log('   POST /api/v1/transactions - Create a new transaction');
+      console.log('   GET  /api/v1/analytics/income-expense - Income vs Expense overview');
+      console.log('   GET  /api/analytics/balance - Balance overview');
+      console.log('   GET  /api/analytics/subclasses - Analytics subclasses');
+      console.log('   POST /api/v1/receipts/process-ocr - Process receipt OCR for review');
+      console.log('   POST /api/v1/receipts/confirm-transaction - Confirm and create transaction');
+      console.log('   POST /api/v1/receipts/reject-processing - Reject processing and cleanup');
+      console.log('   GET  /api/v1/receipts/history - Get receipt processing history');
     });
 
   } catch (error) {
-    console.error(' Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 };
