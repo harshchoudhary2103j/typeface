@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: typeface-mongo
+    restart: always
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  authentication-service:
+    build:
+      context: ./AuthenticationService
+    container_name: typeface-authentication-service
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./AuthenticationService/.env
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
